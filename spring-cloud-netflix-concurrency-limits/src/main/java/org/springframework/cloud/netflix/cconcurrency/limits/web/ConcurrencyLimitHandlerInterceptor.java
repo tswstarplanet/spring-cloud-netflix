@@ -48,10 +48,10 @@ public class ConcurrencyLimitHandlerInterceptor implements HandlerInterceptor {
 
 		try {
 			//TODO: headers with information?
-			response.sendError(HttpStatus.TOO_MANY_REQUESTS.value());
-			response.getWriter().print("Concurrency limit exceeded");
-			/*response.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
-					"Concurrency limit exceeded");*/
+			/*response.sendError(HttpStatus.TOO_MANY_REQUESTS.value());
+			response.getWriter().print("Concurrency limit exceeded");*/
+			response.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
+					"Concurrency limit exceeded");
 		} catch (IOException e) {
 			// ignore
 		}

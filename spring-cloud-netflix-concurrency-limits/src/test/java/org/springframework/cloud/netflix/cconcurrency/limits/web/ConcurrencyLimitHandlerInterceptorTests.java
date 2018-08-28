@@ -18,7 +18,6 @@
 package org.springframework.cloud.netflix.cconcurrency.limits.web;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -30,9 +29,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.ParallelFlux;
-import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
+import reactor.util.function.Tuple2;
 
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -43,17 +41,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import reactor.util.function.Tuple2;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(/*properties = "logging.level.reactor=DEBUG",*/ webEnvironment = RANDOM_PORT)
+@SpringBootTest(properties = "logging.level.reactor.netty=DEBUG", webEnvironment = RANDOM_PORT)
 public class ConcurrencyLimitHandlerInterceptorTests {
 
 	@LocalServerPort
@@ -70,12 +66,13 @@ public class ConcurrencyLimitHandlerInterceptorTests {
 	public void handlerInterceptorWorks() {
 
 		// TODO: assert the body
-		/*ParallelFlux<Tuple2<String, HttpStatus>> flux = Flux.range(1, 10)
-				.flatMap(integer -> client.get().uri("/").exchange())
-				.parallel(2)
-				.runOn(Schedulers.parallel())
-				.flatMap(response -> response.bodyToMono(String.class).zipWith(Mono.just(response.statusCode())))
-				.log("reqs", Level.INFO);
+		Flux<Tuple2<String, HttpStatus>> flux = Flux.range(1, 10)
+				.flatMap(integer -> client.get().uri("/").exchange(), 2)
+				// .log("reqs", Level.INFO)
+				.flatMap(response -> response.bodyToMono(String.class)
+						.defaultIfEmpty("")
+						/*.log("body2mono", Level.INFO)*/
+						.zipWith(Mono.just(response.statusCode())));
 
 		Responses responses = new Responses();
 		StepVerifier.create(flux)
@@ -86,26 +83,8 @@ public class ConcurrencyLimitHandlerInterceptorTests {
 					} else if (status.equals(HttpStatus.TOO_MANY_REQUESTS)) {
 						responses.tooManyReqs.incrementAndGet();
 						String body = response.getT1();
-						System.out.println(body);
-					} else {
-						responses.other.incrementAndGet();
-					}
-				}).verifyComplete();*/
-
-		ParallelFlux<ClientResponse> flux = Flux.range(1, 10)
-				.flatMap(integer -> client.get().uri("/").exchange())
-				.parallel(2)
-				.runOn(Schedulers.parallel());
-
-		Responses responses = new Responses();
-		StepVerifier.create(flux)
-				.thenConsumeWhile(response -> true, response -> {
-					if (response.statusCode().equals(HttpStatus.OK)) {
-						responses.success.incrementAndGet();
-					} else if (response.statusCode().equals(HttpStatus.TOO_MANY_REQUESTS)) {
-						responses.tooManyReqs.incrementAndGet();
-						// String body = response.bodyToMono(String.class).block();
-						// System.out.println(body);
+						//TODO: body from handler isn't coming thru
+						// assertThat(body).isEqualTo("Concurrency limit exceeded");
 					} else {
 						responses.other.incrementAndGet();
 					}
@@ -139,7 +118,6 @@ public class ConcurrencyLimitHandlerInterceptorTests {
 
 		@GetMapping
 		public String get() throws Exception {
-			Thread.sleep(300);
 			return "Hello";
 		}
 
