@@ -18,6 +18,7 @@
 package org.springframework.cloud.netflix.cconcurrency.limits.web;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -28,6 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.ParallelFlux;
 import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
@@ -45,12 +47,13 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import reactor.util.function.Tuple2;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = RANDOM_PORT)
+@SpringBootTest(/*properties = "logging.level.reactor=DEBUG",*/ webEnvironment = RANDOM_PORT)
 public class ConcurrencyLimitHandlerInterceptorTests {
 
 	@LocalServerPort
@@ -71,7 +74,24 @@ public class ConcurrencyLimitHandlerInterceptorTests {
 				.flatMap(integer -> client.get().uri("/").exchange())
 				.parallel(2)
 				.runOn(Schedulers.parallel())
-				.flatMap(response -> response.bodyToMono(String.class).zipWith(Mono.just(response.statusCode())));*/
+				.flatMap(response -> response.bodyToMono(String.class).zipWith(Mono.just(response.statusCode())))
+				.log("reqs", Level.INFO);
+
+		Responses responses = new Responses();
+		StepVerifier.create(flux)
+				.thenConsumeWhile(response -> true, response -> {
+					HttpStatus status = response.getT2();
+					if (status.equals(HttpStatus.OK)) {
+						responses.success.incrementAndGet();
+					} else if (status.equals(HttpStatus.TOO_MANY_REQUESTS)) {
+						responses.tooManyReqs.incrementAndGet();
+						String body = response.getT1();
+						System.out.println(body);
+					} else {
+						responses.other.incrementAndGet();
+					}
+				}).verifyComplete();*/
+
 		ParallelFlux<ClientResponse> flux = Flux.range(1, 10)
 				.flatMap(integer -> client.get().uri("/").exchange())
 				.parallel(2)
