@@ -17,8 +17,6 @@
 
 package org.springframework.cloud.netflix.cconcurrency.limits.web;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.servlet.http.HttpServletRequest;
 
 import com.netflix.concurrency.limits.Limiter;
@@ -27,17 +25,12 @@ import com.netflix.concurrency.limits.servlet.ServletLimiterBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-import reactor.util.function.Tuple2;
 
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.core.style.ToStringCreator;
-import org.springframework.http.HttpStatus;
+import org.springframework.cloud.netflix.cconcurrency.limits.test.AbstractConcurrencyLimitsTests;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,12 +38,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(properties = "logging.level.reactor.netty=DEBUG", webEnvironment = RANDOM_PORT)
-public class ConcurrencyLimitHandlerInterceptorTests {
+public class ConcurrencyLimitsHandlerInterceptorTests extends AbstractConcurrencyLimitsTests {
 
 	@LocalServerPort
 	public int port;
@@ -64,51 +56,7 @@ public class ConcurrencyLimitHandlerInterceptorTests {
 
 	@Test
 	public void handlerInterceptorWorks() {
-
-		// TODO: assert the body
-		Flux<Tuple2<String, HttpStatus>> flux = Flux.range(1, 10)
-				.flatMap(integer -> client.get().uri("/").exchange(), 2)
-				// .log("reqs", Level.INFO)
-				.flatMap(response -> response.bodyToMono(String.class)
-						.defaultIfEmpty("")
-						/*.log("body2mono", Level.INFO)*/
-						.zipWith(Mono.just(response.statusCode())));
-
-		Responses responses = new Responses();
-		StepVerifier.create(flux)
-				.thenConsumeWhile(response -> true, response -> {
-					HttpStatus status = response.getT2();
-					if (status.equals(HttpStatus.OK)) {
-						responses.success.incrementAndGet();
-					} else if (status.equals(HttpStatus.TOO_MANY_REQUESTS)) {
-						responses.tooManyReqs.incrementAndGet();
-						String body = response.getT1();
-						//TODO: body from handler isn't coming thru
-						// assertThat(body).isEqualTo("Concurrency limit exceeded");
-					} else {
-						responses.other.incrementAndGet();
-					}
-				}).verifyComplete();
-
-		System.out.println("Responses: " + responses);
-
-		assertThat(responses.other).hasValue(0);
-		assertThat(responses.tooManyReqs).hasValueGreaterThanOrEqualTo(1);
-	}
-
-	protected static class Responses {
-		AtomicInteger success = new AtomicInteger(0);
-		AtomicInteger tooManyReqs = new AtomicInteger(0);
-		AtomicInteger other = new AtomicInteger(0);
-
-		@Override
-		public String toString() {
-			return new ToStringCreator(this)
-					.append("success", success)
-					.append("tooManyReqs", tooManyReqs)
-					.append("other", other)
-					.toString();
-		}
+		assertLimiter(client);
 	}
 
 	@SpringBootConfiguration
@@ -126,7 +74,7 @@ public class ConcurrencyLimitHandlerInterceptorTests {
 			Limiter<HttpServletRequest> limiter = new ServletLimiterBuilder()
 					.limiter(builder -> builder.limit(SettableLimit.startingAt(1)))
 					.build();
-			ConcurrencyLimitHandlerInterceptor interceptor = new ConcurrencyLimitHandlerInterceptor(limiter);
+			ConcurrencyLimitsHandlerInterceptor interceptor = new ConcurrencyLimitsHandlerInterceptor(limiter);
 			registry.addInterceptor(interceptor);
 		}
 	}

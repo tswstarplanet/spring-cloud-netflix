@@ -30,11 +30,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-public class ConcurrencyLimitHandlerInterceptor implements HandlerInterceptor {
+public class ConcurrencyLimitsHandlerInterceptor implements HandlerInterceptor {
 
 	private final Limiter<HttpServletRequest> limiter;
 
-	public ConcurrencyLimitHandlerInterceptor(Limiter<HttpServletRequest> limiter) {
+	public ConcurrencyLimitsHandlerInterceptor(Limiter<HttpServletRequest> limiter) {
 		this.limiter = limiter;
 	}
 
