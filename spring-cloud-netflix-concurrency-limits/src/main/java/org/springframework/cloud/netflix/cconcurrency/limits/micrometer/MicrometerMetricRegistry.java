@@ -26,21 +26,21 @@ import io.micrometer.core.instrument.Tags;
 
 public class MicrometerMetricRegistry implements MetricRegistry {
 
-	private final MeterRegistry metricRegistry;
+	private final MeterRegistry meterRegistry;
 	//TODO: baseId?
 
-	public MicrometerMetricRegistry(MeterRegistry metricRegistry) {
-		this.metricRegistry = metricRegistry;
+	public MicrometerMetricRegistry(MeterRegistry meterRegistry) {
+		this.meterRegistry = meterRegistry;
 	}
 
 	@Override
 	public SampleListener registerDistribution(String id, String... tagNameValuePairs) {
-		DistributionSummary summary = this.metricRegistry.summary(id, tagNameValuePairs);
+		DistributionSummary summary = this.meterRegistry.summary(id, tagNameValuePairs);
 		return value -> summary.record(value.longValue());
 	}
 
 	@Override
 	public void registerGauge(String id, Supplier<Number> supplier, String... tagNameValuePairs) {
-		this.metricRegistry.gauge(id, Tags.of(tagNameValuePairs), supplier.get());
+		this.meterRegistry.gauge(id, Tags.of(tagNameValuePairs), supplier.get());
 	}
 }
