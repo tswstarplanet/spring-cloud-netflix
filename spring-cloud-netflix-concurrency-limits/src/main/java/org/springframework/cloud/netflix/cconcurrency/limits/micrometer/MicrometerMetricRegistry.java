@@ -17,18 +17,30 @@
 
 package org.springframework.cloud.netflix.cconcurrency.limits.micrometer;
 
-import com.netflix.concurrency.limits.MetricRegistry;
-
 import java.util.function.Supplier;
 
+import com.netflix.concurrency.limits.MetricRegistry;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+
 public class MicrometerMetricRegistry implements MetricRegistry {
-	@Override
-	public SampleListener registerDistribution(String s, String... strings) {
-		return null;
+
+	private final MeterRegistry metricRegistry;
+	//TODO: baseId?
+
+	public MicrometerMetricRegistry(MeterRegistry metricRegistry) {
+		this.metricRegistry = metricRegistry;
 	}
 
 	@Override
-	public void registerGauge(String s, Supplier<Number> supplier, String... strings) {
+	public SampleListener registerDistribution(String id, String... tagNameValuePairs) {
+		DistributionSummary summary = this.metricRegistry.summary(id, tagNameValuePairs);
+		return value -> summary.record(value.longValue());
+	}
 
+	@Override
+	public void registerGauge(String id, Supplier<Number> supplier, String... tagNameValuePairs) {
+		this.metricRegistry.gauge(id, Tags.of(tagNameValuePairs), supplier.get());
 	}
 }
