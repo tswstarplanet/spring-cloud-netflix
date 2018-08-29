@@ -15,7 +15,7 @@
  *
  */
 
-package org.springframework.cloud.netflix.cconcurrency.limits.reactive;
+package org.springframework.cloud.netflix.concurrency.limits.reactive;
 
 import java.security.Principal;
 import java.util.Optional;

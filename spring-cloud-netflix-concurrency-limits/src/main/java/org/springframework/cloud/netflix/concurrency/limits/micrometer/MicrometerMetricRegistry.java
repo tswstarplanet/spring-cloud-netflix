@@ -15,7 +15,7 @@
  *
  */
 
-package org.springframework.cloud.netflix.cconcurrency.limits.micrometer;
+package org.springframework.cloud.netflix.concurrency.limits.micrometer;
 
 import java.util.function.Supplier;
 

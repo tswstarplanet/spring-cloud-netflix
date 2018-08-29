@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package org.springframework.cloud.netflix.cconcurrency.limits.reactive;
+package org.springframework.cloud.netflix.concurrency.limits.reactive;
 
 import com.netflix.concurrency.limits.Limiter;
 import org.springframework.beans.factory.ObjectProvider;

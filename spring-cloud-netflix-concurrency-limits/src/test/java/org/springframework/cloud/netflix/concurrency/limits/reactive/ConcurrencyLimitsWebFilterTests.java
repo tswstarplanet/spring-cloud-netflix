@@ -15,46 +15,52 @@
  *
  */
 
-package org.springframework.cloud.netflix.cconcurrency.limits.web;
+package org.springframework.cloud.netflix.concurrency.limits.reactive;
 
 import java.util.function.Consumer;
 
 import com.netflix.concurrency.limits.limit.SettableLimit;
-import com.netflix.concurrency.limits.servlet.ServletLimiterBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.cloud.netflix.cconcurrency.limits.test.AbstractConcurrencyLimitsTests;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.cloud.netflix.concurrency.limits.test.AbstractConcurrencyLimitsTests;
+import org.springframework.cloud.test.ClassPathExclusions;
+import org.springframework.cloud.test.ModifiedClassPathRunner;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.SocketUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+@RunWith(ModifiedClassPathRunner.class)
+@ClassPathExclusions({"spring-boot-starter-tomcat-*", "tomcat-embed-*"})
+public class ConcurrencyLimitsWebFilterTests extends AbstractConcurrencyLimitsTests {
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(properties = "logging.level.reactor.netty=DEBUG", webEnvironment = RANDOM_PORT)
-public class ConcurrencyLimitsHandlerInterceptorTests extends AbstractConcurrencyLimitsTests {
-
-	@LocalServerPort
 	public int port;
 
 	private WebClient client;
 
 	@Before
 	public void init() {
+		port = SocketUtils.findAvailableTcpPort();
 		client = WebClient.create("http://localhost:"+port);
 	}
 
 	@Test
-	public void handlerInterceptorWorks() {
-		assertLimiter(client);
+	@SuppressWarnings("Duplicates")
+	public void webFilterWorks() {
+
+		try (ConfigurableApplicationContext context = new SpringApplicationBuilder()
+				.properties("server.port="+port, "spring.main.web-application-type=reactive")
+				.sources(TestConfig.class).run()) {
+
+			assertLimiter(client);
+		}
 	}
 
 	@SpringBootConfiguration
@@ -68,9 +74,9 @@ public class ConcurrencyLimitsHandlerInterceptorTests extends AbstractConcurrenc
 		}
 
 		@Bean
-		public Consumer<ServletLimiterBuilder> limiterBuilderConfigurer() {
-			return servletLimiterBuilder -> servletLimiterBuilder
-					.limiter(limiterBuilder -> limiterBuilder.limit(SettableLimit.startingAt(1)));
+		public Consumer<ServerWebExchangeLimiterBuilder> limiterBuilderConfigurer() {
+			return limiterBuilder -> limiterBuilder
+					.limiter(builder -> builder.limit(SettableLimit.startingAt(1)));
 		}
 	}
 

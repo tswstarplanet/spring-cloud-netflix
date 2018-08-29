@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package org.springframework.cloud.netflix.cconcurrency.limits.web;
+package org.springframework.cloud.netflix.concurrency.limits.web;
 
 import java.util.function.Consumer;
 

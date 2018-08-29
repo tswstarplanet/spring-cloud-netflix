@@ -15,7 +15,7 @@
  *
  */
 
-package org.springframework.cloud.netflix.cconcurrency.limits.test;
+package org.springframework.cloud.netflix.concurrency.limits.test;
 
 import org.springframework.core.style.ToStringCreator;
 

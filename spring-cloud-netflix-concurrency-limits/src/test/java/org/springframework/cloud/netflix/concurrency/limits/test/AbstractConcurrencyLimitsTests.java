@@ -15,7 +15,7 @@
  *
  */
 
-package org.springframework.cloud.netflix.cconcurrency.limits.test;
+package org.springframework.cloud.netflix.concurrency.limits.test;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;

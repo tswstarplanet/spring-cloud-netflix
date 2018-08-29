@@ -15,7 +15,7 @@
  *
  */
 
-package org.springframework.cloud.netflix.cconcurrency.limits.micrometer;
+package org.springframework.cloud.netflix.concurrency.limits.micrometer;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
