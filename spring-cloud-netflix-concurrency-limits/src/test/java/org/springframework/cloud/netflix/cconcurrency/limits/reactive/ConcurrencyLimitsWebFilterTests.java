@@ -17,7 +17,8 @@
 
 package org.springframework.cloud.netflix.cconcurrency.limits.reactive;
 
-import com.netflix.concurrency.limits.Limiter;
+import java.util.function.Consumer;
+
 import com.netflix.concurrency.limits.limit.SettableLimit;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +36,6 @@ import org.springframework.util.SocketUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.server.ServerWebExchange;
 
 @RunWith(ModifiedClassPathRunner.class)
 @ClassPathExclusions({"spring-boot-starter-tomcat-*", "tomcat-embed-*"})
@@ -74,11 +74,9 @@ public class ConcurrencyLimitsWebFilterTests extends AbstractConcurrencyLimitsTe
 		}
 
 		@Bean
-		public ConcurrencyLimitsWebFilter concurrencyLimitsWebFilter() {
-			Limiter<ServerWebExchange> limiter = new ServerWebExchangeLimiterBuilder()
-					.limiter(builder -> builder.limit(SettableLimit.startingAt(1)))
-					.build();
-			return new ConcurrencyLimitsWebFilter(limiter);
+		public Consumer<ServerWebExchangeLimiterBuilder> limiterBuilderConfigurer() {
+			return limiterBuilder -> limiterBuilder
+					.limiter(builder -> builder.limit(SettableLimit.startingAt(1)));
 		}
 	}
 

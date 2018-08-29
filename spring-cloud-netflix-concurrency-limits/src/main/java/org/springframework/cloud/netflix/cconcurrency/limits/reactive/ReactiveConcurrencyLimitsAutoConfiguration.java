@@ -16,4 +16,44 @@
  */
 package org.springframework.cloud.netflix.cconcurrency.limits.reactive;
 
-public class ReactiveConcurrencyLimitsAutoConfiguration {}
+import com.netflix.concurrency.limits.Limiter;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.server.WebFilter;
+
+import java.util.function.Consumer;
+
+@Configuration
+@ConditionalOnWebApplication(type = Type.REACTIVE)
+@ConditionalOnClass({WebFilter.class, Mono.class})
+public class ReactiveConcurrencyLimitsAutoConfiguration {
+
+	private final ObjectProvider<Consumer<ServerWebExchangeLimiterBuilder>> configurerProvider;
+
+	public ReactiveConcurrencyLimitsAutoConfiguration(ObjectProvider<Consumer<ServerWebExchangeLimiterBuilder>> configurerProvider) {
+		this.configurerProvider = configurerProvider;
+	}
+
+	@Bean
+	@ConditionalOnMissingBean
+	public Limiter<ServerWebExchange> webfluxLimiter() {
+		ServerWebExchangeLimiterBuilder builder = new ServerWebExchangeLimiterBuilder();
+
+		this.configurerProvider.ifAvailable(consumer -> consumer.accept(builder));
+
+		return builder.build();
+	}
+
+	@Bean
+	public ConcurrencyLimitsWebFilter concurrencyLimitsWebFilter(Limiter<ServerWebExchange> limiter) {
+		return new ConcurrencyLimitsWebFilter(limiter);
+	}
+}
