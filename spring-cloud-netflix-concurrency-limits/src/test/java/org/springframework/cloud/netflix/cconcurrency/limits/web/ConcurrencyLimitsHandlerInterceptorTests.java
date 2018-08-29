@@ -17,9 +17,6 @@
 
 package org.springframework.cloud.netflix.cconcurrency.limits.web;
 
-import javax.servlet.http.HttpServletRequest;
-
-import com.netflix.concurrency.limits.Limiter;
 import com.netflix.concurrency.limits.limit.SettableLimit;
 import com.netflix.concurrency.limits.servlet.ServletLimiterBuilder;
 import org.junit.Before;
@@ -30,13 +27,13 @@ import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.cloud.netflix.cconcurrency.limits.support.LimiterBuilderConfigurer;
 import org.springframework.cloud.netflix.cconcurrency.limits.test.AbstractConcurrencyLimitsTests;
+import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
@@ -62,20 +59,17 @@ public class ConcurrencyLimitsHandlerInterceptorTests extends AbstractConcurrenc
 	@SpringBootConfiguration
 	@EnableAutoConfiguration
 	@RestController
-	protected static class TestConfig implements WebMvcConfigurer {
+	protected static class TestConfig {
 
 		@GetMapping
 		public String get() throws Exception {
 			return "Hello";
 		}
 
-		@Override
-		public void addInterceptors(InterceptorRegistry registry) {
-			Limiter<HttpServletRequest> limiter = new ServletLimiterBuilder()
-					.limiter(builder -> builder.limit(SettableLimit.startingAt(1)))
-					.build();
-			ConcurrencyLimitsHandlerInterceptor interceptor = new ConcurrencyLimitsHandlerInterceptor(limiter);
-			registry.addInterceptor(interceptor);
+		@Bean
+		public LimiterBuilderConfigurer<ServletLimiterBuilder> limiterBuilderConfigurer() {
+			return servletLimiterBuilder -> servletLimiterBuilder
+					.limiter(limiterBuilder -> limiterBuilder.limit(SettableLimit.startingAt(1)));
 		}
 	}
 
