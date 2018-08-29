@@ -16,6 +16,8 @@
  */
 package org.springframework.cloud.netflix.cconcurrency.limits.web;
 
+import java.util.function.Consumer;
+
 import javax.servlet.http.HttpServletRequest;
 
 import com.netflix.concurrency.limits.Limiter;
@@ -27,7 +29,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type;
-import org.springframework.cloud.netflix.cconcurrency.limits.support.LimiterBuilderConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -39,9 +40,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @ConditionalOnClass({HttpServletRequest.class, HandlerInterceptor.class})
 public class MvcConcurrencyLimitsAutoConfiguration implements WebMvcConfigurer {
 
-	private final ObjectProvider<LimiterBuilderConfigurer<ServletLimiterBuilder>> configurerProvider;
+	private final ObjectProvider<Consumer<ServletLimiterBuilder>> configurerProvider;
 
-	public MvcConcurrencyLimitsAutoConfiguration(ObjectProvider<LimiterBuilderConfigurer<ServletLimiterBuilder>> configurerProvider) {
+	public MvcConcurrencyLimitsAutoConfiguration(ObjectProvider<Consumer<ServletLimiterBuilder>> configurerProvider) {
 		this.configurerProvider = configurerProvider;
 	}
 
@@ -50,7 +51,7 @@ public class MvcConcurrencyLimitsAutoConfiguration implements WebMvcConfigurer {
 	public Limiter<HttpServletRequest> servletLimiter() {
 		ServletLimiterBuilder builder = new ServletLimiterBuilder();
 
-		this.configurerProvider.ifAvailable(configurer -> configurer.configure(builder));
+		this.configurerProvider.ifAvailable(consumer -> consumer.accept(builder));
 
 		return builder.build();
 	}

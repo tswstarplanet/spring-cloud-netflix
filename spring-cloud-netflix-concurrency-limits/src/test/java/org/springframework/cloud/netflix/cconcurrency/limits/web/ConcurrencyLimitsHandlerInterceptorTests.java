@@ -17,6 +17,8 @@
 
 package org.springframework.cloud.netflix.cconcurrency.limits.web;
 
+import java.util.function.Consumer;
+
 import com.netflix.concurrency.limits.limit.SettableLimit;
 import com.netflix.concurrency.limits.servlet.ServletLimiterBuilder;
 import org.junit.Before;
@@ -27,7 +29,6 @@ import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.cloud.netflix.cconcurrency.limits.support.LimiterBuilderConfigurer;
 import org.springframework.cloud.netflix.cconcurrency.limits.test.AbstractConcurrencyLimitsTests;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -67,7 +68,7 @@ public class ConcurrencyLimitsHandlerInterceptorTests extends AbstractConcurrenc
 		}
 
 		@Bean
-		public LimiterBuilderConfigurer<ServletLimiterBuilder> limiterBuilderConfigurer() {
+		public Consumer<ServletLimiterBuilder> limiterBuilderConfigurer() {
 			return servletLimiterBuilder -> servletLimiterBuilder
 					.limiter(limiterBuilder -> limiterBuilder.limit(SettableLimit.startingAt(1)));
 		}
