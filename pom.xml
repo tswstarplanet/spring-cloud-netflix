@@ -26,7 +26,7 @@
 		<spring-cloud-config.version>2.1.0.BUILD-SNAPSHOT</spring-cloud-config.version>
 		<spring-cloud-stream.version>Fishtown.BUILD-SNAPSHOT</spring-cloud-stream.version>
 		<!-- Has to be a stable version (not one that depends on this version of netflix): -->
-		<donotreplacespring-cloud-contract.version>1.2.4.RELEASE</donotreplacespring-cloud-contract.version>
+		<donotreplacespring-cloud-contract.version>2.0.1.RELEASE</donotreplacespring-cloud-contract.version>
 
 		<!-- Plugin versions -->
 		<maven-compiler-plugin.version>3.6.1</maven-compiler-plugin.version>
@@ -148,6 +148,7 @@
 		<!-- Not part of the reactor build: build and deploy separately -->
 		<!--module>spring-cloud-netflix-hystrix-contract</module-->
 		<module>spring-cloud-netflix-core</module>
+		<module>spring-cloud-netflix-concurrency-limits</module>
 		<module>spring-cloud-netflix-hystrix-dashboard</module>
 		<module>spring-cloud-netflix-hystrix-stream</module>
 		<module>spring-cloud-netflix-eureka-client</module>
